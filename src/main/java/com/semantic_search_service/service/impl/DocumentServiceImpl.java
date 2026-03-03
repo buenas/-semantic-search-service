@@ -135,14 +135,18 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     private List<SearchResultItem> fetchResults(SearchRequest request, String qVector) {
-        QueryBuilder qb = new QueryBuilder(SQL_SEARCH_INNER, qVector);
-        qb.applyFilters(request.getFilters());
-        qb.applyMinScore(request.getMinScore());
-        qb.applyPagination(request.getSize(), request.getPage() * request.getSize());
-        return jdbcTemplate.query(qb.sql(), this::mapToSearchResultItem, qb.params());
+        QueryBuilder inner = new QueryBuilder(SQL_SEARCH_INNER, qVector);
+        inner.applyFilters(request.getFilters());
+
+        String outerSql = "SELECT * FROM (\n" + inner.sql() + ") AS sub\n";
+        QueryBuilder outer = new QueryBuilder(outerSql, inner);
+        outer.applyMinScore(request.getMinScore());
+        outer.applyPagination(request.getSize(), request.getPage() * request.getSize());
+        return jdbcTemplate.query(outer.sql(), this::mapToSearchResultItem, outer.params());
     }
 
     private int countResults(String qVector, Map<String, String> filters, Double minScore) {
+        //build inner
         QueryBuilder inner = new QueryBuilder(SQL_COUNT_INNER, qVector);
         inner.applyFilters(filters);
         String countSql = "SELECT COUNT(*) FROM (\n" + inner.sql() + ") AS sub\n";
@@ -218,7 +222,7 @@ public class DocumentServiceImpl implements DocumentService {
         }
         return sb.append("]").toString();
     }
-
+//QueryBuilder — encapsulates dynamic SQL + param construction for search
     private static class QueryBuilder {
 
         private final StringBuilder sql;
