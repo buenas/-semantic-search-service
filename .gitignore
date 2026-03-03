@@ -1,0 +1,31 @@
+# Build output
+target/
+
+# IDE files
+.idea/
+*.iml
+*.iws
+*.ipr
+/infra/tenantId
+/tenantId
+
+# Environment secrets — NEVER commit these
+.env
+.env.local
+application-local.properties
+application-secrets.properties
+
+# OS files
+.DS_Store
+Thumbs.db
+```
+
+---
+
+### Summary of what gets committed
+```
+src/main/resources/application.properties        ✅ yes
+src/test/resources/application-test.properties   ✅ yes
+infra/docker-compose.yml                         ✅ yes
+infra/docker-compose.dev.yml                     ✅ yes
+.gitignore                                       ✅ yes

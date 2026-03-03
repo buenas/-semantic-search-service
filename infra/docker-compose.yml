@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: semantic_search_postgres
+    environment:
+      POSTGRES_DB: semantic_search
+      POSTGRES_USER: semantic
+      POSTGRES_PASSWORD: semantic
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: semantic_search_app
+    depends_on:
+      - postgres
+    environment:
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_BOOT_AUTOCONFIGURE_JDBC: DEBUG
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/semantic_search
+      SPRING_DATASOURCE_USERNAME: semantic
+      SPRING_DATASOURCE_PASSWORD: semantic
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_EMBEDDING_MODEL: ${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}
+      SPRING_FLYWAY_ENABLED: "true"
+      SPRING_FLYWAY_LOCATIONS: classpath:db/migration
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
